@@ -1,0 +1,26 @@
+{
+  "source": {
+      "include": [
+          "../README.md",
+          "app.js",
+          "controller/db.js",
+          "controller/tracer.js",
+          "routes/agent.js",
+          "routes/index.js",
+          "utils/logging.js"
+      ]
+  },
+  "opts": {
+      "destination": "docs/gen",
+      "recurse": true,
+      "pedantic": true,
+      "template": "./node_modules/minami"
+  },
+  "templates": {
+      "systemName": "DBoM Database Agent for Node.js",
+      "theme": "cosmo"
+  },
+  "tags": {
+      "allowUnknownTags": false
+  }
+}
