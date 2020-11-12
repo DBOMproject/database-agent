@@ -18,7 +18,7 @@ An example agent that uses mongodb for persistent storage and exposes the CQA (C
 
 ### API
 
-Latest OpenAPI Specification for this API is available on the [api-specs repository](https://github.com/DBOMproject/deployment/blob/master/api-specs/agent)
+Latest OpenAPI Specification for this API is available on the [api-specs repository](https://github.com/DBOMproject/api-specs/tree/master/agent)
 
 ### Configuration
 
@@ -41,13 +41,13 @@ Latest OpenAPI Specification for this API is available on the [api-specs reposit
 
 ## Helm Deployment
 
-Instructions for deploying the database-agent using helm charts can be found [here](https://github.com/DBOMproject/deployment/blob/master/charts/database-agent)
+Instructions for deploying the database-agent using helm charts can be found [here](https://github.com/DBOMproject/deployments/tree/master/charts/database-agent)
 
 ## Getting Help
 
 If you have any queries on database-agent, feel free to reach us on any of our [communication channels](https://github.com/DBOMproject/community/blob/master/COMMUNICATION.md) 
 
-If you have questions, concerns, bug reports, etc, please file an issue in this repository's [Issue Tracker](https://github.com/DBOMproject/database-agent/issues).
+If you have questions, concerns, bug reports, etc, please file an issue in this repository's [issue tracker](https://github.com/DBOMproject/database-agent/issues).
 
 ## Getting Involved
 
