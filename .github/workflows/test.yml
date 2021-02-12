@@ -14,8 +14,7 @@ jobs:
       uses: actions/checkout@v2
     - name: Test and Create Coverage Data
       working-directory: ${{ env.working-directory }}
-      run: npm ci
-      run: npm run test-coveralls
+      run: npm ci && npm run test-coveralls
     - name: Coveralls
       uses: coverallsapp/github-action@v1.1.2
       with:
