@@ -1,0 +1,8 @@
+version: 2
+updates:
+  - package-ecosystem: "npm" # See documentation for possible values
+    directory: "src/" # Location of package manifests
+    reviewers: 
+      - "DBOMproject/Unisys-Technical"
+    schedule:
+      interval: "daily"
