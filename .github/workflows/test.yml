@@ -20,3 +20,4 @@ jobs:
       with:
           github-token: ${{ secrets.github_token }}
           path-to-lcov: ${{ env.working-directory }}/coverage/lcov.info
+          base-path: ${{ env.working-directory }}
