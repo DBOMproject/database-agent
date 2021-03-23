@@ -17,7 +17,7 @@
     "express-winston": "^4.0.3",
     "jaeger-client": "^3.18.0",
     "mongodb": "^3.5.5",
-    "morgan": "~1.9.1",
+    "morgan": "~1.10.0",
     "node-cache": "^5.1.2",
     "opentracing": "^0.14.4",
     "winston": "^3.3.3"
