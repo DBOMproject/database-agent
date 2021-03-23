@@ -20,7 +20,7 @@
     "morgan": "~1.9.1",
     "node-cache": "^5.1.2",
     "opentracing": "^0.14.4",
-    "winston": "^3.2.1"
+    "winston": "^3.3.3"
   },
   "devDependencies": {
     "chai": "^4.2.0",
@@ -30,7 +30,7 @@
     "eslint": "^7.7.0",
     "eslint-config-airbnb": "^18.2.0",
     "eslint-plugin-import": "^2.22.1",
-    "jsdoc": "^3.6.5",
+    "jsdoc": "^3.6.6",
     "minami": "^1.2.3",
     "mocha": "^8.1.2",
     "mocha-jenkins-reporter": "^0.4.5",
