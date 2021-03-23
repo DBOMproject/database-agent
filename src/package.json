@@ -29,7 +29,7 @@
     "decache": "^4.6.0",
     "eslint": "^7.7.0",
     "eslint-config-airbnb": "^18.2.0",
-    "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-import": "^2.22.1",
     "jsdoc": "^3.6.5",
     "minami": "^1.2.3",
     "mocha": "^8.1.2",
