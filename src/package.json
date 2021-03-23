@@ -19,7 +19,7 @@
     "mongodb": "^3.5.5",
     "morgan": "~1.10.0",
     "node-cache": "^5.1.2",
-    "opentracing": "^0.14.4",
+    "opentracing": "^0.14.5",
     "winston": "^3.3.3"
   },
   "devDependencies": {
