@@ -4,6 +4,7 @@
   "description": "Sample implementation of the mongodb agent for DBoM",
   "private": true,
   "scripts": {
+    "preinstall": "npx npm-force-resolutions",
     "start": "node bin/www",
     "test": "./node_modules/.bin/nyc ./node_modules/.bin/mocha --require ./test-helpers/prepare.js --colors --timeout=1200000 --exit && npx nyc report --reporter=html",
     "test-coveralls": "./node_modules/.bin/nyc ./node_modules/.bin/mocha --require ./test-helpers/prepare.js --timeout=1200000 --exit && npx nyc report --reporter=lcovonly",
@@ -48,5 +49,10 @@
     "exclude": [
       "controller/tracer.js"
     ]
+  },
+  "resolutions": {
+    "taffydb": "2.7.3",
+    "lodash": "4.17.21",
+    "underscore": "1.13.1"
   }
 }
