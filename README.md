@@ -9,6 +9,7 @@ An example agent that uses mongodb for persistent storage and exposes the CQA (C
   - [API](#api)
   - [Configuration](#configuration)
 - [Helm Deployment](#helm-deployment)
+- [Platform Support](#platform-support)
 - [Getting Help](#getting-help)
 - [Getting Involved](#getting-involved)
 
@@ -42,6 +43,10 @@ Latest OpenAPI Specification for this API is available on the [api-specs reposit
 ## Helm Deployment
 
 Instructions for deploying the database-agent using helm charts can be found [here](https://github.com/DBOMproject/deployments/tree/master/charts/database-agent)
+
+## Platform Support
+
+Currently, we provide pre-built container images for linux amd64 and arm64 architectures via our Github Actions Pipeline. Find the images [here](https://hub.docker.com/r/dbomproject/chainsource-gateway)
 
 ## Getting Help
 
