@@ -46,7 +46,7 @@ Instructions for deploying the database-agent using helm charts can be found [he
 
 ## Platform Support
 
-Currently, we provide pre-built container images for linux amd64 and arm64 architectures via our Github Actions Pipeline. Find the images [here](https://hub.docker.com/r/dbomproject/chainsource-gateway)
+Currently, we provide pre-built container images for linux amd64 and arm64 architectures via our Github Actions Pipeline. Find the images [here](https://hub.docker.com/r/dbomproject/database-agent)
 
 ## Getting Help
 
