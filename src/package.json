@@ -53,6 +53,7 @@
   "resolutions": {
     "taffydb": "2.7.3",
     "lodash": "4.17.21",
-    "underscore": "1.13.1"
+    "underscore": "1.13.1",
+    "hosted-git-info": "2.8.9"
   }
 }
