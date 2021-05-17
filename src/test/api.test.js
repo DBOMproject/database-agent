@@ -14,24 +14,36 @@
  *   limitations under the License.
  */
 
-const { prepareFakeAudit } = require('../test-helpers/db-handler');
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const sinonChai = require('sinon-chai');
+const sinon = require('sinon');
+const decache = require('decache');
+const {
+  before,
+  describe,
+  it,
+  after,
+} = require('mocha');
+const { prepareFakeAudit } = require('../test-helpers/db-handler');
+
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(sinonChai);
-const decache = require('decache');
-const { before, describe, it } = require('mocha');
 
 let app;
 process.env.MONGO_URI = 'mongodb://127.0.0.1:27071';
 
 before((done) => {
+  sinon.stub(process, 'exit');
   decache('../app');
   // eslint-disable-next-line global-require
   app = require('../app');
   done();
+});
+
+after(() => {
+  sinon.restore();
 });
 
 describe('Index', () => {
@@ -100,7 +112,7 @@ describe('Create', () => {
   it('Create Audit Channel', (done) => {
     chai
       .request(app)
-      .post('/channels/_audit/records')
+      .post('/channels/test_audit/records')
       .set('commit-type', 'CREATE')
       .send({
         recordID: 'test',

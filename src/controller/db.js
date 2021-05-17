@@ -22,70 +22,78 @@
  * @requires winston
  */
 
-const { MongoClient } = require('mongodb');
+const mongodb = require('mongodb');
 const log = require('winston');
 const opentracing = require('opentracing');
 const env = require('../utils/environment');
+const errors = require('../utils/errors');
 
 /**
  * List of different commit types support by the DBoM database agent
  * @const
  */
 const COMMIT_TYPES = {
-    CREATE: 'CREATE',
-    UPDATE: 'UPDATE',
-    ATTACH: 'ATTACH',
-    DETACH: 'DETACH',
-    TRANSFER_IN: 'TRANSFER-IN',
-    TRANSFER_OUT: 'TRANSFER-OUT',
+  CREATE: 'CREATE',
+  UPDATE: 'UPDATE',
+  ATTACH: 'ATTACH',
+  DETACH: 'DETACH',
+  TRANSFER_IN: 'TRANSFER-IN',
+  TRANSFER_OUT: 'TRANSFER-OUT',
 };
-const CHANNEL_DB = process.env.CHANNEL_DB || 'primary';
-const AUDIT_POSTFIX = process.env.AUDIT_POSTFIX || '_audit';
+
+const CHANNEL_DB = env.getChannelDB();
+const AUDIT_POSTFIX = env.getAuditPostfix();
+let client;
 
 /**
- * Creates a forbidden channel error
- * @constructor
+ * Creates an instance of the mongoDB client based on environment variables
+ * @func
+ * @return {MongoClient} - Client that is ready to connect to
  */
-class ForbiddenChannelError extends Error {
-    constructor() {
-        super();
-        this.name = this.constructor.name;
-        this.message = 'Forbidden Channel';
-        this.code = 403;
-        Error.captureStackTrace(this, this.constructor);
-    }
-}
+const makeClientFromEnv = () => {
+  let mongoClient;
+  const tlsParams = env.getTLSParams();
+  const defaultOptions = {
+    numberOfRetries: 5,
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    connectTimeoutMS: env.getMongoConnectionTimeout(),
+    serverSelectionTimeoutMS: env.getMongoServerSelectionTimeout(),
+  };
+  if (tlsParams.enabled) {
+    log.info('Using mutual TLS authentication and X509 authorization');
+    mongoClient = new mongodb.MongoClient(env.getMongoURIFromEnv(),
+      {
+        ...tlsParams.mongoOptions,
+        ...defaultOptions,
+        tls: true,
+      });
+  } else {
+    mongoClient = new mongodb.MongoClient(env.getMongoURIFromEnv(),
+      {
+        ...defaultOptions,
+      });
+  }
+  return mongoClient;
+};
 
 /**
- * Creates a not found error
- * @constructor
+ * Sets up the mongodb client
+ * @func
+ * @return {void}
  */
-class NotFoundError extends Error {
-    constructor() {
-        super();
-        this.name = this.constructor.name;
-        this.message = 'Not Found';
-        this.code = 404;
-        Error.captureStackTrace(this, this.constructor);
-    }
-}
-
-const client = new MongoClient(env.getMongoURIFromEnv(),
-  {
-      numberOfRetries: 5,
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-  });
-
-log.info(`MongoDB: Trying to connect to ${env.getMongoURIFromEnv()}`);
-
-client.connect()
-  .then(() => {
+const setupClient = () => {
+  client = makeClientFromEnv();
+  log.info('Trying to connect to mongoDB using environment configuration');
+  log.debug(`MongoDB: URI is  ${env.getMongoURIFromEnv()}`);
+  return client.connect()
+    .then(() => {
       log.info('MongoDB Connected!');
-  }, (e) => {
+    }, (e) => {
       log.error(`Failed to connect ${e}`);
-  });
-
+      throw e;
+    });
+};
 
 /**
  * Commits a resource to the database
@@ -98,37 +106,37 @@ client.connect()
  * @param ctx {object} the tracing context
  */
 const commitResource = async (channel, recordID, payload, type, ctx) => {
-    const span = opentracing.globalTracer()
-      .startSpan('MongoDB - Create/Update document on channel', {
-          childOf: ctx,
-      });
+  const span = opentracing.globalTracer()
+    .startSpan('MongoDB - Create/Update document on channel', {
+      childOf: ctx,
+    });
 
-    if (channel.endsWith(AUDIT_POSTFIX)) throw new ForbiddenChannelError();
+  if (channel.endsWith(AUDIT_POSTFIX)) throw new errors.ForbiddenChannelError();
 
-    const resource = {
-        ...payload,
-        _id: recordID
-    };
-    const channelCollection = client.db(CHANNEL_DB)
-      .collection(channel);
+  const resource = {
+    ...payload,
+    _id: recordID,
+  };
+  const channelCollection = client.db(CHANNEL_DB)
+    .collection(channel);
 
-    let result;
-    if (type === COMMIT_TYPES.CREATE || type === COMMIT_TYPES.TRANSFER_IN) {
-        log.info('Creating Asset');
-        result = await channelCollection.insertOne(resource);
-    } else {
-        log.info('Updating Asset');
-        result = await channelCollection.replaceOne({ _id: recordID }, resource, {
-            upsert: false,
-        });
-    }
-    if (!result || result.modifiedCount === 0) {
-        span.setTag(opentracing.Tags.ERROR, true);
-        log.error('Mongo Create/Update failure in Channel');
-        throw new NotFoundError();
-    }
-    span.finish();
-    return result;
+  let result;
+  if (type === COMMIT_TYPES.CREATE || type === COMMIT_TYPES.TRANSFER_IN) {
+    log.info('Creating Asset');
+    result = await channelCollection.insertOne(resource);
+  } else {
+    log.info('Updating Asset');
+    result = await channelCollection.replaceOne({ _id: recordID }, resource, {
+      upsert: false,
+    });
+  }
+  if (!result || result.modifiedCount === 0) {
+    span.setTag(opentracing.Tags.ERROR, true);
+    log.error('Mongo Create/Update failure in Channel');
+    throw new errors.NotFoundError();
+  }
+  span.finish();
+  return result;
 };
 
 /**
@@ -141,22 +149,22 @@ const commitResource = async (channel, recordID, payload, type, ctx) => {
  * @returns {object} the resource payload
  */
 const queryResource = async (channel, resourceID, ctx) => {
-    if (channel.endsWith(AUDIT_POSTFIX)) throw new ForbiddenChannelError();
+  if (channel.endsWith(AUDIT_POSTFIX)) throw new errors.ForbiddenChannelError();
 
-    const span = opentracing.globalTracer()
-      .startSpan('MongoDB - findOne from collection', {
-          childOf: ctx,
-      });
-    const collection = client.db(CHANNEL_DB)
-      .collection(channel);
+  const span = opentracing.globalTracer()
+    .startSpan('MongoDB - findOne from collection', {
+      childOf: ctx,
+    });
+  const collection = client.db(CHANNEL_DB)
+    .collection(channel);
 
-    const resource = await collection.findOne({ _id: resourceID });
-    if (!resource) throw new NotFoundError();
-    // eslint-disable-next-line no-underscore-dangle
-    delete resource._id;
+  const resource = await collection.findOne({ _id: resourceID });
+  if (!resource) throw new errors.NotFoundError();
+  // eslint-disable-next-line no-underscore-dangle
+  delete resource._id;
 
-    span.finish();
-    return resource;
+  span.finish();
+  return resource;
 };
 
 /**
@@ -168,27 +176,27 @@ const queryResource = async (channel, resourceID, ctx) => {
  * @returns {object} the resource audit history
  */
 const queryResourceAudit = async (channel, resourceID) => {
-    if (channel.endsWith(AUDIT_POSTFIX)) throw new ForbiddenChannelError();
+  if (channel.endsWith(AUDIT_POSTFIX)) throw new errors.ForbiddenChannelError();
 
-    const collection = client.db(CHANNEL_DB)
-      .collection(`${channel}${AUDIT_POSTFIX}`);
+  const collection = client.db(CHANNEL_DB)
+    .collection(`${channel}${AUDIT_POSTFIX}`);
 
-    const auditTrailCursor = await collection.find({
-        resourceID,
-    }, {
-        projection: {
-            resourceID: 0,
-        }
-    });
-    if (await auditTrailCursor.count() === 0) throw new NotFoundError();
+  const auditTrailCursor = await collection.find({
+    resourceID,
+  }, {
+    projection: {
+      resourceID: 0,
+    },
+  });
+  if (await auditTrailCursor.count() === 0) throw new errors.NotFoundError();
 
-    return auditTrailCursor.toArray();
+  return auditTrailCursor.toArray();
 };
 
 module.exports = {
-    commitResource,
-    queryResource,
-    queryResourceAudit,
-    NotFoundError,
-    ForbiddenChannelError,
+  commitResource,
+  queryResource,
+  queryResourceAudit,
+  makeClientFromEnv,
+  setupClient,
 };
