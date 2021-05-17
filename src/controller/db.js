@@ -80,7 +80,7 @@ const makeClientFromEnv = () => {
 /**
  * Sets up the mongodb client
  * @func
- * @return {void}
+ * @return {Promise<MongoClient>}
  */
 const setupClient = () => {
   client = makeClientFromEnv();

@@ -17,13 +17,11 @@
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const sinonChai = require('sinon-chai');
-const sinon = require('sinon');
 const decache = require('decache');
 const {
   before,
   describe,
   it,
-  after,
 } = require('mocha');
 const { prepareFakeAudit } = require('../test-helpers/db-handler');
 
@@ -35,15 +33,10 @@ let app;
 process.env.MONGO_URI = 'mongodb://127.0.0.1:27071';
 
 before((done) => {
-  sinon.stub(process, 'exit');
   decache('../app');
   // eslint-disable-next-line global-require
   app = require('../app');
   done();
-});
-
-after(() => {
-  sinon.restore();
 });
 
 describe('Index', () => {
