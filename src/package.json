@@ -33,7 +33,7 @@
     "eslint-plugin-import": "^2.22.1",
     "jsdoc": "^3.6.6",
     "minami": "^1.2.3",
-    "mocha": "^8.3.2",
+    "mocha": "^8.4.0",
     "mocha-jenkins-reporter": "^0.4.5",
     "mocha-prepare": "^0.1.0",
     "mocha-prepare-promise": "0.0.2",
@@ -53,6 +53,7 @@
   "resolutions": {
     "taffydb": "2.7.3",
     "lodash": "4.17.21",
-    "underscore": "1.13.1"
+    "underscore": "1.13.1",
+    "hosted-git-info": "2.8.9"
   }
 }
