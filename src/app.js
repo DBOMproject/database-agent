@@ -28,18 +28,22 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const winston = require('winston');
-
 const expressWinston = require('express-winston');
+const dbController = require('./controller/db');
 const jaegerHelper = require('./utils/tracer');
 const indexRouter = require('./routes/index');
 const agentRouter = require('./routes/agent');
 
 /**
- * Express app providing pgp related functions.
+ * Express app providing the agent interface
  * @type {object}
  * @const
  */
 const app = express();
+dbController.setupClient()
+  .catch(() => {
+    process.exit(1);
+  });
 
 app.use(expressWinston.logger({
   level: process.env.LOG_LEVEL || 'info',
@@ -50,7 +54,6 @@ app.use(expressWinston.logger({
     winston.format.timestamp(),
     winston.format.align(),
     winston.format.printf((info) => `${info.timestamp} ${info.level} ${info.message}`),
-
   ),
   msg: 'HTTP {{req.method}} {{req.url}}',
   ignoredRoutes: ['/'],

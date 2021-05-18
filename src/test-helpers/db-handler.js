@@ -22,7 +22,10 @@ const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const { MongoClient } = require('mongodb');
 
-const mongod = new MongoMemoryServer({ binary: { version: '4.2.6' }, instance: { port: 27071 } });
+const mongod = new MongoMemoryServer({
+  binary: { version: '4.2.6' },
+  instance: { port: 27071 },
+});
 
 /**
  * Connect to the in-memory database.
@@ -39,20 +42,19 @@ module.exports.connect = async () => {
   };
 
   await mongoose.connect(uri, mongooseOpts);
-
 };
 
 /**
  * Prepare a fake audit entry for tests
  */
 module.exports.prepareFakeAudit = async () => {
-  let client = await new MongoClient(await mongod.getUri(), {
+  const client = await new MongoClient(await mongod.getUri(), {
     useNewUrlParser: true,
   }).connect();
   await client.db(process.env.CHANNEL_DB || 'primary')
     .collection('test_audit')
     .insertOne({
-      resourceID: 'test'
+      resourceID: 'test',
     });
 };
 
