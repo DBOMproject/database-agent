@@ -14,15 +14,18 @@
  *   limitations under the License.
  */
 
-// eslint-disable-next-line import/no-extraneous-dependencies
 const winston = require('winston');
+// eslint-disable-next-line import/no-extraneous-dependencies
 const prepare = require('mocha-prepare');
+// eslint-disable-next-line import/no-extraneous-dependencies
+const sinon = require('sinon');
 const dbHandler = require('./db-handler');
 
 prepare(
   // before hook
   async (done) => {
     winston.configure({ silent: true });
+    sinon.stub(process, 'exit');
     await dbHandler.connect();
     process.env.MONGO_PORT = await dbHandler.getPort();
     done();
@@ -30,6 +33,7 @@ prepare(
   // after hook
   async (done) => {
     await dbHandler.closeDatabase();
+    sinon.restore();
     done();
   },
 );

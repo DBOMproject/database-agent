@@ -31,8 +31,7 @@ const log = require('winston');
 const opentracing = require('opentracing');
 const db = require('../controller/db');
 const jaegerHelper = require('../utils/tracer');
-const { ForbiddenChannelError } = require('../controller/db');
-const { NotFoundError } = require('../controller/db');
+
 const unauthorizedPayload = {
   success: false,
   status: 'The entity that this agent is authenticated as is not authorized to perform for this operation',
@@ -89,23 +88,27 @@ router.post('/:channel/records/', async (req, res) => {
         status: 'Record already exists, use update',
       });
     } else if (e.name === 'MongoError' && e.code === 13) {
-      res.status(401).json(unauthorizedPayload);
-    } else if (e instanceof ForbiddenChannelError) {
-      res.status(403).json({
-        success: false,
-        status: 'You are not allowed to commit to this channel',
-      });
-    } else if (e instanceof NotFoundError) {
-      res.status(404).json({
-        success: false,
-        status: 'No Such Resource',
-      });
+      res.status(401)
+        .json(unauthorizedPayload);
+    } else if (e.name === 'ForbiddenChannelError') {
+      res.status(403)
+        .json({
+          success: false,
+          status: 'You are not allowed to commit to this channel',
+        });
+    } else if (e.name === 'NotFoundError') {
+      res.status(404)
+        .json({
+          success: false,
+          status: 'No Such Resource',
+        });
     } else {
-      res.status(500).json({
-        success: false,
-        status: 'Agent Commit Failure',
-        error: e.toString(),
-      });
+      res.status(500)
+        .json({
+          success: false,
+          status: 'Agent Commit Failure',
+          error: e.toString(),
+        });
     }
   } finally {
     span.finish();
@@ -138,23 +141,27 @@ router.get('/:channel/records/:recordID', async (req, res) => {
     span.setTag(opentracing.Tags.ERROR, true);
     span.log({ event: 'error', message: e.toString() });
     if (e.name === 'MongoError' && e.code === 13) {
-      res.status(401).json(unauthorizedPayload);
-    } else if (e instanceof NotFoundError) {
-      res.status(404).json({
-        success: false,
-        status: 'No Such Resource',
-      });
-    } else if (e instanceof ForbiddenChannelError) {
-      res.status(403).json({
-        success: false,
-        status: 'You are not allowed to query from this channel',
-      });
+      res.status(401)
+        .json(unauthorizedPayload);
+    } else if (e.name === 'NotFoundError') {
+      res.status(404)
+        .json({
+          success: false,
+          status: 'No Such Resource',
+        });
+    } else if (e.name === 'ForbiddenChannelError') {
+      res.status(403)
+        .json({
+          success: false,
+          status: 'You are not allowed to query from this channel',
+        });
     } else {
-      res.status(500).json({
-        success: false,
-        status: 'Agent Query Failure',
-        error: e.toString(),
-      });
+      res.status(500)
+        .json({
+          success: false,
+          status: 'Agent Query Failure',
+          error: e.toString(),
+        });
     }
   } finally {
     span.finish();
@@ -186,24 +193,28 @@ router.get('/:channel/records/:recordID/audit', async (req, res) => {
     });
   } catch (e) {
     log.error(`Audit Error ${e.toString()}`);
-    if (e instanceof NotFoundError) {
-      res.status(404).json({
-        success: false,
-        status: 'No Such Resource',
-      });
-    } else if (e instanceof ForbiddenChannelError) {
-      res.status(403).json({
-        success: false,
-        status: 'You are not allowed to query audit trail from this channel',
-      });
+    if (e.name === 'NotFoundError') {
+      res.status(404)
+        .json({
+          success: false,
+          status: 'No Such Resource',
+        });
+    } else if (e.name === 'ForbiddenChannelError') {
+      res.status(403)
+        .json({
+          success: false,
+          status: 'You are not allowed to query audit trail from this channel',
+        });
     } else if (e.name === 'MongoError' && e.code === 13) {
-      res.status(401).json(unauthorizedPayload);
+      res.status(401)
+        .json(unauthorizedPayload);
     } else {
-      res.status(500).json({
-        success: false,
-        status: 'Agent Audit Failure',
-        error: e.toString(),
-      });
+      res.status(500)
+        .json({
+          success: false,
+          status: 'Agent Audit Failure',
+          error: e.toString(),
+        });
     }
   }
   span.finish();
