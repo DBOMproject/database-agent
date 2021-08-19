@@ -34,7 +34,7 @@
     "jsdoc": "^3.6.6",
     "minami": "^1.2.3",
     "mocha": "^8.4.0",
-    "mocha-jenkins-reporter": "^0.4.5",
+    "mocha-jenkins-reporter": "^0.4.6",
     "mocha-prepare": "^0.1.0",
     "mocha-prepare-promise": "0.0.2",
     "mongo-unit": "^2.0.1",
