@@ -16,6 +16,7 @@
 
 const chai = require('chai');
 const chaiHttp = require('chai-http');
+
 const { expect } = chai;
 const decache = require('decache');
 const { before, describe, it } = require('mocha');
@@ -79,4 +80,52 @@ describe('Bad Connection', () => {
       });
   });
 });
-
+it('List Channels Bad Connection', (done) => {
+  chai
+    .request(app)
+    .get('/channels/')
+    .end((err, res) => {
+      expect(res)
+        .to
+        .have
+        .status(500);
+      done();
+    });
+});
+it('List Records Bad Connection', (done) => {
+  chai
+    .request(app)
+    .get('/channels/test/records/')
+    .end((err, res) => {
+      expect(res)
+        .to
+        .have
+        .status(500);
+      done();
+    });
+});
+it('Query Records Bad Connection', (done) => {
+  chai
+    .request(app)
+    .get('/channels/test/records/_query?query={}')
+    .end((err, res) => {
+      expect(res)
+        .to
+        .have
+        .status(500);
+      done();
+    });
+});
+it('Query Records Post Bad Connection', (done) => {
+  chai
+    .request(app)
+    .post('/channels/test/records/_query')
+    .send({ query: {} })
+    .end((err, res) => {
+      expect(res)
+        .to
+        .have
+        .status(500);
+      done();
+    });
+});
