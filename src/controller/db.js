@@ -159,7 +159,7 @@ const listChannels = async (ctx) => {
     }
     const collectionsArray = collections.map((item) => item.name);
     span.finish();
-    return collectionsArray;
+    return collectionsArray.filter((collection) => !collection.endsWith(AUDIT_POSTFIX));
   });
 };
 
