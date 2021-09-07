@@ -59,6 +59,18 @@ module.exports.prepareFakeAudit = async () => {
 };
 
 /**
+ * Prepare an empty db for tests
+ */
+module.exports.prepareEmptyDB = async () => {
+  await this.connect();
+  process.env.MONGO_PORT = await this.getPort();
+  const client = await new MongoClient(await mongod.getUri(), {
+    useNewUrlParser: true,
+  }).connect();
+  await client.db('empty');
+};
+
+/**
  * Connect to the in-memory database.
  */
 module.exports.getPort = async () => {
