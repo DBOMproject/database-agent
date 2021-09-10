@@ -99,7 +99,7 @@ const setupClient = () => {
  * Commits a resource to the database
  * @func
  * @async
- * @param channel {string} the name of the channel
+ * @param channel {string} the id of the channel
  * @param recordID {string} the id of the record
  * @param payload {object} payload to write
  * @param type {string} the commit type to perform
@@ -140,10 +140,98 @@ const commitResource = async (channel, recordID, payload, type, ctx) => {
 };
 
 /**
+ * List channels from the database
+ * @func
+ * @async
+ * @param ctx {object} the tracing context
+ * @returns {object} the list of channel ids
+ */
+const listChannels = async (ctx) => {
+  const span = opentracing.globalTracer()
+    .startSpan('MongoDB - List channels', {
+      childOf: ctx,
+    });
+  // eslint-disable-next-line max-len
+  return client.db(CHANNEL_DB).listCollections(null, { nameOnly: true }).toArray().then((collections) => {
+    if (collections.length === 0) {
+      span.finish();
+      throw new errors.NotFoundError();
+    }
+    const collectionsArray = collections.map((item) => item.name);
+    span.finish();
+    return collectionsArray.filter((collection) => !collection.endsWith(AUDIT_POSTFIX));
+  });
+};
+
+/**
+ * List records from the database
+ * @func
+ * @async
+ * @param channel {string} the id of the channel
+ * @param ctx {object} the tracing context
+ * @returns {object} the list of record ids
+ */
+const listRecords = async (channel, ctx) => {
+  if (channel.endsWith(AUDIT_POSTFIX)) throw new errors.ForbiddenChannelError();
+  const span = opentracing.globalTracer()
+    .startSpan('MongoDB - List records', {
+      childOf: ctx,
+    });
+  const collection = client.db(CHANNEL_DB)
+    .collection(channel);
+
+  const resources = [];
+  const cursor = await collection.find({}, { projection: { _id: 1 } });
+  if ((await cursor.count()) === 0) {
+    log.info('No records found');
+    span.finish();
+    throw new errors.NotFoundError();
+  }
+  await cursor.forEach((resource) => {
+    // eslint-disable-next-line dot-notation
+    resources.push(resource['_id']);
+  });
+  span.finish();
+  return resources;
+};
+
+/**
+ * Query records from the database
+ * @func
+ * @async
+ * @param channel {string} the id of the channel
+ * @param ctx {object} the tracing context
+ * @returns {object} the list of records
+ */
+const queryRecords = async (channel, query, projection, limit, skip, ctx) => {
+  if (channel.endsWith(AUDIT_POSTFIX)) throw new errors.ForbiddenChannelError();
+  const span = opentracing.globalTracer()
+    .startSpan('MongoDB - Query records', {
+      childOf: ctx,
+    });
+  const collection = client.db(CHANNEL_DB)
+    .collection(channel);
+
+  const resources = [];
+  const cursor = await collection.find(query, { projection, limit, skip });
+  if ((await cursor.count()) === 0) {
+    log.info('No records found');
+    span.finish();
+    throw new errors.NotFoundError();
+  }
+  await cursor.forEach((resource) => {
+    // eslint-disable-next-line dot-notation
+    resources.push(resource);
+  });
+  span.finish();
+  return resources;
+};
+
+/**
  * Queries a resource from the database
  * @func
  * @async
- * @param channel {string} the name of the channel
+ * @param channel {string} the id of the channel
  * @param resourceID {string} the id of the resource
  * @param ctx {object} the tracing context
  * @returns {object} the resource payload
@@ -171,7 +259,7 @@ const queryResource = async (channel, resourceID, ctx) => {
  * Queries a the audit history of a resource from the database
  * @func
  * @async
- * @param channel {string} the name of the channel
+ * @param channel {string} the id of the channel
  * @param resourceID {string} the id of the resource
  * @returns {object} the resource audit history
  */
@@ -195,6 +283,9 @@ const queryResourceAudit = async (channel, resourceID) => {
 
 module.exports = {
   commitResource,
+  listChannels,
+  listRecords,
+  queryRecords,
   queryResource,
   queryResourceAudit,
   makeClientFromEnv,

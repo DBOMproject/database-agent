@@ -33,6 +33,7 @@ let app;
 process.env.MONGO_URI = 'mongodb://127.0.0.1:27071';
 
 before((done) => {
+  process.env.CHANNEL_DB = 'primary';
   decache('../app');
   // eslint-disable-next-line global-require
   app = require('../app');
@@ -67,6 +68,30 @@ describe('Create', () => {
         recordID: 'test',
         recordIDPayload: {
           test: 'test',
+          test2: 'test',
+        },
+      })
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(200);
+        expect(res.body.success)
+          .to
+          .equals(true);
+        done();
+      });
+  });
+  it('Create New 2', (done) => {
+    chai
+      .request(app)
+      .post('/channels/test/records')
+      .set('commit-type', 'CREATE')
+      .send({
+        recordID: 'test2',
+        recordIDPayload: {
+          test: 'test2',
+          test2: 'test2',
         },
       })
       .end((err, res) => {
@@ -184,10 +209,134 @@ describe('Get', () => {
         done();
       });
   });
-  it('Get No AssetID', (done) => {
+  it('Get Audit Channel', (done) => {
+    chai
+      .request(app)
+      .get('/channels/_audit/records/test')
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(403);
+        expect(res.body.success)
+          .to
+          .equals(false);
+        done();
+      });
+  });
+});
+
+describe('List Channels', () => {
+  it('List Channels', (done) => {
+    chai
+      .request(app)
+      .get('/channels/')
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(200);
+        expect(res.body.length)
+          .to
+          .equal(1);
+        expect(res.body)
+          .to
+          .contain('test');
+        done();
+      });
+  });
+});
+
+describe('List Channel Assets', () => {
+  it('List Channel Assets', (done) => {
     chai
       .request(app)
       .get('/channels/test/records/')
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(200);
+        expect(res.body.length)
+          .to
+          .equal(2);
+        expect(res.body)
+          .to
+          .contain('test');
+        expect(res.body)
+          .to
+          .contain('test2');
+        done();
+      });
+  });
+  it('List Bad Channel', (done) => {
+    chai
+      .request(app)
+      .get('/channels/bad/records')
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(404);
+        expect(res.body.success)
+          .to
+          .equals(false);
+        done();
+      });
+  });
+  it('List Audit Channel', (done) => {
+    chai
+      .request(app)
+      .get('/channels/_audit/records')
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(403);
+        expect(res.body.success)
+          .to
+          .equals(false);
+        done();
+      });
+  });
+});
+
+describe('Query Channel Assets', () => {
+  it('Query Channel Assets', (done) => {
+    chai
+      .request(app)
+      .get('/channels/test/records/_query?query={}')
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(200);
+        expect(Object.keys(res.body).length)
+          .to
+          .equal(2);
+        expect(res.body)
+          .to
+          .have
+          .property('test');
+        expect(res.body)
+          .to
+          .have
+          .property('test2');
+        expect(res.body.test)
+          .to
+          .have
+          .property('test');
+        expect(res.body.test)
+          .to
+          .have
+          .property('test2');
+        done();
+      });
+  });
+  it('Query Channel Assets None', (done) => {
+    chai
+      .request(app)
+      .get('/channels/none/records/_query?query={}')
       .end((err, res) => {
         expect(res)
           .to
@@ -196,10 +345,331 @@ describe('Get', () => {
         done();
       });
   });
-  it('Get Audit Channel', (done) => {
+  it('Query Channel Assets Limit', (done) => {
     chai
       .request(app)
-      .get('/channels/_audit/records/test')
+      .get('/channels/test/records/_query?query={}&limit=1')
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(200);
+        expect(Object.keys(res.body).length)
+          .to
+          .equal(1);
+        expect(res.body)
+          .to
+          .have
+          .property('test');
+        done();
+      });
+  });
+  it('Query Channel Assets Bad Limit', (done) => {
+    chai
+      .request(app)
+      .get('/channels/test/records/_query?query={}&limit=one')
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(400);
+        done();
+      });
+  });
+  it('Query Channel Assets Skip', (done) => {
+    chai
+      .request(app)
+      .get('/channels/test/records/_query?query={}&limit=1&skip=1')
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(200);
+        expect(Object.keys(res.body).length)
+          .to
+          .equal(1);
+        expect(res.body)
+          .to
+          .not
+          .have
+          .property('test');
+        expect(res.body)
+          .to
+          .have
+          .property('test2');
+        done();
+      });
+  });
+  it('Query Channel Assets Bad Skip', (done) => {
+    chai
+      .request(app)
+      .get('/channels/test/records/_query?query={}&limit=1&skip=one')
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(400);
+        done();
+      });
+  });
+  it('Query Channel Assets Filter', (done) => {
+    chai
+      .request(app)
+      .get('/channels/test/records/_query?query={}&filter=["test"]')
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(200);
+        expect(Object.keys(res.body).length)
+          .to
+          .equal(2);
+        expect(res.body)
+          .to
+          .have
+          .property('test');
+        expect(res.body.test)
+          .to
+          .have
+          .property('test');
+        expect(res.body.test)
+          .to
+          .not
+          .have
+          .property('test2');
+        done();
+      });
+  });
+  it('Query Channel Assets Bad Filter', (done) => {
+    chai
+      .request(app)
+      .get('/channels/test/records/_query?query={}&filter="test"')
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(400);
+        done();
+      });
+  });
+  it('Query Channel Assets Bad Filter Parse', (done) => {
+    chai
+      .request(app)
+      .get('/channels/test/records/_query?query={}&filter={test')
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(400);
+        done();
+      });
+  });
+  it('Query Channel Assets Missing Filter', (done) => {
+    chai
+      .request(app)
+      .get('/channels/test/records/_query?query={}&filter=[]')
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(400);
+        done();
+      });
+  });
+  it('Query Audit Channel', (done) => {
+    chai
+      .request(app)
+      .get('/channels/_audit/records/_query?query={}')
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(403);
+        expect(res.body.success)
+          .to
+          .equals(false);
+        done();
+      });
+  });
+});
+
+describe('Query Channel Assets - Post', () => {
+  it('Query Channel Assets', (done) => {
+    chai
+      .request(app)
+      .post('/channels/test/records/_query')
+      .send({ query: {} })
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(200);
+        expect(Object.keys(res.body).length)
+          .to
+          .equal(2);
+        expect(res.body)
+          .to
+          .have
+          .property('test');
+        expect(res.body)
+          .to
+          .have
+          .property('test2');
+        expect(res.body.test)
+          .to
+          .have
+          .property('test');
+        expect(res.body.test)
+          .to
+          .have
+          .property('test2');
+        done();
+      });
+  });
+  it('Query Channel Assets None', (done) => {
+    chai
+      .request(app)
+      .post('/channels/none/records/_query')
+      .send({ query: {} })
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(404);
+        done();
+      });
+  });
+  it('Query Channel Assets Limit', (done) => {
+    chai
+      .request(app)
+      .post('/channels/test/records/_query')
+      .send({ query: {}, limit: 1 })
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(200);
+        expect(Object.keys(res.body).length)
+          .to
+          .equal(1);
+        expect(res.body)
+          .to
+          .have
+          .property('test');
+        done();
+      });
+  });
+  it('Query Channel Assets Bad Limit', (done) => {
+    chai
+      .request(app)
+      .post('/channels/test/records/_query')
+      .send({ query: {}, limit: 'one' })
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(400);
+        done();
+      });
+  });
+  it('Query Channel Assets Skip', (done) => {
+    chai
+      .request(app)
+      .post('/channels/test/records/_query')
+      .send({ query: {}, limit: 1, skip: 1 })
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(200);
+        expect(Object.keys(res.body).length)
+          .to
+          .equal(1);
+        expect(res.body)
+          .to
+          .not
+          .have
+          .property('test');
+        expect(res.body)
+          .to
+          .have
+          .property('test2');
+        done();
+      });
+  });
+  it('Query Channel Assets Bad Skip', (done) => {
+    chai
+      .request(app)
+      .post('/channels/test/records/_query')
+      .send({ query: {}, limit: 1, skip: 'one' })
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(400);
+        done();
+      });
+  });
+  it('Query Channel Assets Filter', (done) => {
+    chai
+      .request(app)
+      .post('/channels/test/records/_query')
+      .send({ query: {}, filter: ['test'] })
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(200);
+        expect(Object.keys(res.body).length)
+          .to
+          .equal(2);
+        expect(res.body)
+          .to
+          .have
+          .property('test');
+        expect(res.body.test)
+          .to
+          .have
+          .property('test');
+        expect(res.body.test)
+          .to
+          .not
+          .have
+          .property('test2');
+        done();
+      });
+  });
+  it('Query Channel Assets Bad Filter', (done) => {
+    chai
+      .request(app)
+      .post('/channels/test/records/_query')
+      .send({ query: {}, filter: 'test' })
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(400);
+        done();
+      });
+  });
+  it('Query Channel Assets Missing Filter', (done) => {
+    chai
+      .request(app)
+      .post('/channels/test/records/_query?query={}')
+      .send({ query: {}, filter: [] })
+      .end((err, res) => {
+        expect(res)
+          .to
+          .have
+          .status(400);
+        done();
+      });
+  });
+  it('Query Audit Channel', (done) => {
+    chai
+      .request(app)
+      .post('/channels/_audit/records/_query')
+      .send({ query: {} })
       .end((err, res) => {
         expect(res)
           .to
@@ -262,6 +732,7 @@ describe('Update', () => {
 
 describe('Audit', () => {
   it('Audit Existing', (done) => {
+    process.env.CHANNEL_DB = 'primary';
     prepareFakeAudit()
       .then(() => {
         chai
