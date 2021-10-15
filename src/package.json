@@ -38,7 +38,7 @@
     "mocha-prepare": "^0.1.0",
     "mocha-prepare-promise": "0.0.2",
     "mongo-unit": "^2.0.1",
-    "mongodb-memory-server": "^6.9.6",
+    "mongodb-memory-server": "^7.4.4",
     "mongoose": "^5.13.11",
     "nyc": "^15.1.0",
     "sinon": "^11.1.2",
