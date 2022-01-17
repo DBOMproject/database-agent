@@ -20,7 +20,7 @@
     "mongodb": "^3.7.3",
     "morgan": "~1.10.0",
     "node-cache": "^5.1.2",
-    "opentracing": "^0.14.5",
+    "opentracing": "^0.14.7",
     "winston": "^3.3.3"
   },
   "devDependencies": {
@@ -30,7 +30,7 @@
     "decache": "^4.6.0",
     "eslint": "^7.32.0",
     "eslint-config-airbnb": "^18.2.1",
-    "eslint-plugin-import": "^2.24.2",
+    "eslint-plugin-import": "^2.25.4",
     "jsdoc": "^3.6.6",
     "minami": "^1.2.3",
     "mocha": "^9.1.1",
