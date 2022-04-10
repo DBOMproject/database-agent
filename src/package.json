@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "cookie-parser": "~1.4.6",
-    "debug": "~4.3.2",
+    "debug": "~4.3.4",
     "express": "~4.17.1",
     "express-winston": "^4.2.0",
     "jaeger-client": "^3.18.1",
