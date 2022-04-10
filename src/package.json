@@ -16,7 +16,7 @@
     "debug": "~4.3.4",
     "express": "~4.17.1",
     "express-winston": "^4.2.0",
-    "jaeger-client": "^3.18.1",
+    "jaeger-client": "^3.19.0",
     "mongodb": "^3.7.3",
     "morgan": "~1.10.0",
     "node-cache": "^5.1.2",
