@@ -12,15 +12,15 @@
     "generate-docs": "./node_modules/.bin/jsdoc -c ./docs/jsdoc.json"
   },
   "dependencies": {
-    "cookie-parser": "~1.4.4",
-    "debug": "~4.3.2",
+    "cookie-parser": "~1.4.6",
+    "debug": "~4.3.4",
     "express": "~4.17.1",
     "express-winston": "^4.2.0",
     "jaeger-client": "^3.18.1",
     "mongodb": "^3.7.3",
     "morgan": "~1.10.0",
     "node-cache": "^5.1.2",
-    "opentracing": "^0.14.5",
+    "opentracing": "^0.14.7",
     "winston": "^3.3.3"
   },
   "devDependencies": {
@@ -30,7 +30,7 @@
     "decache": "^4.6.0",
     "eslint": "^7.32.0",
     "eslint-config-airbnb": "^18.2.1",
-    "eslint-plugin-import": "^2.24.2",
+    "eslint-plugin-import": "^2.26.0",
     "jsdoc": "^3.6.6",
     "minami": "^1.2.3",
     "mocha": "^9.1.1",
