@@ -20,7 +20,7 @@
     "morgan": "~1.10.0",
     "node-cache": "^5.1.2",
     "opentracing": "^0.14.7",
-    "winston": "^3.3.3"
+    "winston": "^3.8.2"
   },
   "devDependencies": {
     "chai": "^4.3.7",
