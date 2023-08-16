@@ -20,7 +20,7 @@ jobs:
       working-directory: ${{ env.working-directory }}
       run: npm ci && npm run test-coveralls
     - name: Coveralls
-      uses: coverallsapp/github-action@v1.1.2
+      uses: coverallsapp/github-action@v1.2.5
       with:
           github-token: ${{ secrets.github_token }}
           path-to-lcov: ${{ env.working-directory }}/coverage/lcov.info
