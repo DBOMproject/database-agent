@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+type ChannelMeta {
+  channelId String
+  status    String
+  access    String
+}
+
+type NodeMeta {
+  nodeId             String
+  status             String
+  channelConnections ChannelMeta[]
+}
+
+// Node is a model for storing the node details (_metadata)
+model Node {
+  id              String     @id @default(auto()) @map("_id") @db.ObjectId
+  nodeId          String     @unique
+  publicKeys      String[]
+  nodeConnections NodeMeta[]
+  createdAt       DateTime   @default(now())
+  modifiedAt      DateTime   @default(now())
+
+  @@map("node")
+}
+
+// Channel is a model for storing the channel
+model Channel {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  channelId   String   @unique
+  description String
+  type        String
+  asset       Asset[]
+  notaries    Json
+  createdAt   DateTime @default(now())
+  modifiedAt  DateTime @default(now())
+
+  @@map("channel")
+}
+
+// Asset is a model for storing the asset
+model Asset {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  assetId    String
+  channel    Channel  @relation(fields: [channelId], references: [channelId])
+  channelId  String
+  payload    Json
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @default(now())
+ 
+  @@unique([assetId, channelId])
+  @@map("asset")
+}
+
+// History is a model for storing the history of the asset
+model History {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  channelId String
+  assetId   String
+  action    String
+  payload   Json
+  timestamp DateTime @default(now())
+
+  @@map("history")
+}
+
+// Federation is a model for storing the federation request
+model Federation {
+  requestId  String   @id @default(auto()) @map("_id") @db.ObjectId
+  nodeUri    String
+  nodeId     String
+  channelId  String
+  status     String
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @default(now())
+
+  @@map("federation")
+}

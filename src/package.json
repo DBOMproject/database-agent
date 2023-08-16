@@ -1,0 +1,61 @@
+{
+  "name": "database-agent",
+  "version": "0.0.0",
+  "description": "Sample implementation of the mongodb agent for DBoM",
+  "private": true,
+  "scripts": {
+    "start": "node index",
+    "dev": "npx prisma generate && npx prisma db push && nodemon index",
+    "migrate": "npx prisma generate && npx prisma db push",
+    "test": "./node_modules/.bin/nyc ./node_modules/.bin/mocha --require ./test-helpers/prepare.js --colors --timeout=1200000 --exit && npx nyc report --reporter=html",
+    "test-jenkins": "./node_modules/.bin/cross-env JUNIT_REPORT_PATH=./report.xml ./node_modules/.bin/nyc ./node_modules/.bin/mocha --require ./test-helpers/prepare.js --reporter mocha-jenkins-reporter --timeout=1200000 --exit && npx nyc report --reporter=html",
+    "generate-docs": "./node_modules/.bin/jsdoc -c ./docs/jsdoc.json"
+  },
+  "dependencies": {
+    "@prisma/client": "^4.8.0",
+    "body-parser": "^1.20.2",
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "dotenv": "^16.3.1",
+    "express": "~4.16.1",
+    "express-winston": "^4.0.3",
+    "jaeger-client": "^3.18.0",
+    "mongodb": "^3.5.5",
+    "morgan": "~1.9.1",
+    "nats": "^2.13.1",
+    "node-cache": "^5.1.1",
+    "opentracing": "^0.14.4",
+    "winston": "^3.8.2"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-http": "^4.3.0",
+    "cross-env": "^7.0.2",
+    "decache": "^4.6.0",
+    "eslint": "^7.7.0",
+    "eslint-config-airbnb": "^18.2.0",
+    "eslint-plugin-import": "^2.22.0",
+    "jsdoc": "^3.6.5",
+    "minami": "^1.2.3",
+    "mocha": "^8.1.2",
+    "mocha-jenkins-reporter": "^0.4.5",
+    "mocha-prepare": "^0.1.0",
+    "mocha-prepare-promise": "0.0.2",
+    "mongo-unit": "^2.0.1",
+    "mongodb-memory-server": "^6.6.6",
+    "mongoose": "^5.10.1",
+    "nyc": "^15.1.0",
+    "prisma": "^4.8.0",
+    "sinon": "^9.2.1",
+    "sinon-chai": "^3.5.0"
+  },
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "controller/tracer.js"
+    ]
+  },
+  "prettier": {
+    "singleQuote": true
+  }
+}

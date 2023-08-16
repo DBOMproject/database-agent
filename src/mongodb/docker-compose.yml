@@ -1,0 +1,18 @@
+version: "3"
+services:
+  mongo_db_dev:
+    container_name: mongo_db_dev
+    restart: always
+    build: ../mongodb_replica
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: prisma
+      MONGO_INITDB_DATABASE: dbom
+      MONGO_REPLICA_HOST: localhost
+      MONGO_REPLICA_PORT: 27018
+    ports:
+      - 27018:27018
+    volumes:
+      - mongo_db_dev:/data/db
+volumes:
+  mongo_db_dev: {}
