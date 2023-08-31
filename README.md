@@ -1,20 +1,4 @@
 # DBoM Database Agent
-An example agent that uses mongodb for persistent storage and exposes the CQA (Commit-Query-Audit) interface as required by the Digital Bill of Materials(DBoM) gateway
-
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
-
-- [DBoM Database Agent](#dbom-database-agent)
-  - [How to Use](#how-to-use)
-    - [API](#api)
-    - [Configuration](#configuration)
-  - [Helm Deployment](#helm-deployment)
-  - [Platform Support](#platform-support)
-  - [Getting Help](#getting-help)
-  - [Getting Involved](#getting-involved)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update --># DBoM Repository Agent (Database Agent)
 
 The DBoM Repository Agent component for the Digital Bill of Materials
 
