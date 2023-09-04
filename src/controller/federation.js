@@ -147,6 +147,12 @@ const getAllRequests = async () => {
   try {
     const federation = await prisma.federation.findMany({});
     log.info(`Found ${federation.length} federation requests`);
+    if (federation.length === 0) {
+      return JSON.stringify({
+        success: true,
+        status: `Found ${federation.length} federation requests`,
+      });
+    }
     return JSON.stringify({ success: true, result: federation });
   } catch (error) {
     log.error(`Failed to list FederationRequests: ${error.message}`);
@@ -174,7 +180,10 @@ const getOneRequest = async (requestData) => {
         status: `FederationRequest ${requestId} not found`,
       });
     }
-    return JSON.stringify({ success: true, result: federation });
+    return JSON.stringify({
+      success: true,
+      result: federation,
+    });
   } catch (error) {
     log.error(`Failed to retrieve FederationRequest: ${error.message}`);
     return JSON.stringify({
