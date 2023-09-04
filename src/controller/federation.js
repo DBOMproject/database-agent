@@ -37,7 +37,10 @@ const createRequest = async (requestData) => {
 
     if (channel.length === 0) {
       log.info(`Channel ${channelId} does not exist`);
-      return;
+      return JSON.stringify({
+        success: false,
+        status: `Channel ${channelId} does not exist`,
+      });
     }
 
     log.info(`Found ${channel} channel - ${JSON.stringify(channel)}`);
@@ -111,22 +114,31 @@ const createRequest = async (requestData) => {
         log.info(`FederationRequest created: ${JSON.stringify(federation)}`);
         log.info(`Node _metadata updated ${JSON.stringify(updatedNode)}`);
 
-        return JSON.stringify(federation);
+        return JSON.stringify({ success: true, result: federation });
       } else {
         log.info(
-          `ChannelId ${channelId} is already connected within channelConnections. Skipping update.`
+          `ChannelId ${channelId} is already connected within channelConnections.`
         );
-        return;
+        return JSON.stringify({
+          success: false,
+          status: `ChannelId ${channelId} is already connected within channelConnections.`,
+        });
       }
     } else {
       log.info(
-        `Federation exists. ${channelId} is already connected within channelConnections. Skipping update.`
+        `Federation exists. ${channelId} is already connected within channelConnections.`
       );
-      return;
+      return JSON.stringify({
+        success: false,
+        status: `Federation exists. ${channelId} is already connected within channelConnections`,
+      });
     }
   } catch (error) {
     log.error(`Failed to create FederationRequest: ${error.message}`);
-    throw new Error('Failed to create FederationRequest');
+    return JSON.stringify({
+      success: false,
+      status: `Failed to create FederationRequest`,
+    });
   }
 };
 
@@ -135,10 +147,13 @@ const getAllRequests = async () => {
   try {
     const federation = await prisma.federation.findMany({});
     log.info(`Found ${federation.length} federation requests`);
-    return JSON.stringify(federation);
+    return JSON.stringify({ success: true, result: federation });
   } catch (error) {
-    log.error(`Failed to list FederationRequest/s: ${error.message}`);
-    throw new Error('Failed to retrieve FederationRequests');
+    log.error(`Failed to list FederationRequests: ${error.message}`);
+    return JSON.stringify({
+      success: false,
+      status: 'Failed to retrieve FederationRequests',
+    });
   }
 };
 
@@ -153,10 +168,19 @@ const getOneRequest = async (requestData) => {
     });
 
     log.info(`Found ${federation.length} FederationRequest`);
-    return JSON.stringify(federation);
+    if (federation.length === 0) {
+      return JSON.stringify({
+        success: false,
+        status: `FederationRequest ${requestId} not found`,
+      });
+    }
+    return JSON.stringify({ success: true, result: federation });
   } catch (error) {
     log.error(`Failed to retrieve FederationRequest: ${error.message}`);
-    throw new Error('Failed to retrieve FederationRequest');
+    return JSON.stringify({
+      success: false,
+      status: 'Failed to retrieve FederationRequest',
+    });
   }
 };
 
@@ -206,16 +230,19 @@ const acceptRequest = async (requestData) => {
         },
       });
       log.info(`Updated FederationRequest: ${JSON.stringify(federation)}`);
-      return JSON.stringify(federationRequest);
+      return JSON.stringify({ success: true, result: federationRequest });
     } else {
       log.info(
         `FederationRequest ${requestId} not found or already ACCEPTED / REJECTED`
       );
-      return;
+      return JSON.stringify({
+        success: false,
+        status: `FederationRequest ${requestId} not found or already ACCEPTED / REJECTED`,
+      });
     }
   } catch (error) {
     log.error(`Failed to accept FederationRequest: ${error.message}`);
-    throw new Error('Failed to accept FederationRequest');
+    return JSON.stringify({ error: 'Failed to accept FederationRequest' });
   }
 };
 
@@ -265,16 +292,22 @@ const rejectRequest = async (requestData) => {
         },
       });
       log.info(`Updated FederationRequest: ${JSON.stringify(federation)}`);
-      return JSON.stringify(federationRequest);
+      return JSON.stringify({ success: true, result: federationRequest });
     } else {
       log.info(
         `FederationRequest ${requestId} not found or already ACCEPTED / REJECTED`
       );
-      return;
+      return JSON.stringify({
+        success: false,
+        status: `FederationRequest ${requestId} not found or already ACCEPTED / REJECTED`,
+      });
     }
   } catch (error) {
     log.error(`Failed to reject FederationRequest: ${error.message}`);
-    throw new Error('Failed to reject FederationRequest');
+    return JSON.stringify({
+      success: false,
+      status: 'Failed to reject FederationRequest',
+    });
   }
 };
 
@@ -303,10 +336,13 @@ const revokeAccess = async (requestData) => {
       },
     });
     log.info('Node _metadata update success', nodeMetaUpdate);
-    return JSON.stringify(nodeMetaUpdate);
+    return JSON.stringify({ success: true, result: nodeMetaUpdate });
   } catch (error) {
     log.error(`Failed to revoke access: ${error.message}`);
-    throw new Error('Failed to revoke access');
+    return JSON.stringify({
+      success: false,
+      status: 'Failed to revoke access',
+    });
   }
 };
 
