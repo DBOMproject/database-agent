@@ -22,7 +22,7 @@ type NodeMeta {
   channelConnections ChannelMeta[]
 }
 
-// Node is a model for storing the node details (_metadata)
+// Node is a model for storing the node metadata
 model Node {
   id              String     @id @default(auto()) @map("_id") @db.ObjectId
   nodeId          String     @unique
@@ -57,7 +57,7 @@ model Asset {
   payload    Json
   createdAt  DateTime @default(now())
   modifiedAt DateTime @default(now())
- 
+
   @@unique([assetId, channelId])
   @@map("asset")
 }

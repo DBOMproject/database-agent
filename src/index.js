@@ -65,15 +65,15 @@ const {
 // Iterate through the NATS server configurations
 servers.forEach(async (v) => {
   try {
-    // Check if the node's _metadata exists in the database
+    // Check if the node's metadata exists in the database
     const node = await prisma.node.findMany({});
-    log.info(`Node _metadata Found ${JSON.stringify(node)}`);
+    log.info(`found node metadata: ${JSON.stringify(node)}`);
     if (node.length === 0) {
       // If not, initialize the node
       await initNode();
     }
   } catch (error) {
-    log.error(`Failed to list node details: ${error}`);
+    log.error(`failed to retrieve node metadata: ${error}`);
   }
 
   // Connect to NATS
@@ -82,7 +82,7 @@ servers.forEach(async (v) => {
   // Handling NATS node events
   const nodeSubscriptionEvents = nc.subscribe('node.*');
   (async (sub) => {
-    // Listen for node-related requests
+    // Listen for node related requests
     log.info(`listening for ${sub.getSubject()} requests [ details ]`);
     for await (const m of sub) {
       const chunks = m.subject.split('.');
@@ -99,7 +99,15 @@ servers.forEach(async (v) => {
           break;
         }
         default:
-          m.respond(sc.encode('Incorrect Node Request'));
+          m.respond(
+            sc.encode(
+              JSON.stringify({
+                success: false,
+                status: `invalid request`,
+              })
+            )
+          );
+          break;
       }
     }
   })(nodeSubscriptionEvents);
@@ -107,7 +115,7 @@ servers.forEach(async (v) => {
   // Handling NATS asset events
   const assetSubscriptionEvents = nc.subscribe('asset.*');
   (async (sub) => {
-    // Listen for asset-related requests
+    // Listen for asset related requests
     log.info(
       `listening for ${sub.getSubject()} requests [all | one | create | update | richQuery | query | audit | link | unlink | validate ]`
     );
@@ -115,7 +123,6 @@ servers.forEach(async (v) => {
       const chunks = m.subject.split('.');
       log.info(`[asset] #${sub.getProcessed()} handling [${chunks[1]}]`);
       switch (chunks[1]) {
-        // Handle different asset requests
         case 'all': {
           const result = await getAllAsset(sc.decode(m.data));
           m.respond(sc.encode(result));
@@ -162,7 +169,15 @@ servers.forEach(async (v) => {
           break;
         }
         default:
-          m.respond(sc.encode('Incorrect Asset Request'));
+          m.respond(
+            sc.encode(
+              JSON.stringify({
+                success: false,
+                status: `invalid request`,
+              })
+            )
+          );
+          break;
       }
     }
   })(assetSubscriptionEvents);
@@ -170,7 +185,7 @@ servers.forEach(async (v) => {
   // Handling NATS channel events
   const channelSubscriptionEvents = nc.subscribe('channel.*');
   (async (sub) => {
-    // Listen for channel-related requests
+    // Listen for channel related requests
     log.info(
       `listening for ${sub.getSubject()} requests [ all | one | create | update | delete ]`
     );
@@ -178,7 +193,6 @@ servers.forEach(async (v) => {
       const chunks = m.subject.split('.');
       log.info(`[channel] #${sub.getProcessed()} handling [${chunks[1]}]`);
       switch (chunks[1]) {
-        // Handle different channel requests
         case 'all': {
           const result = await getAllChannel(sc.decode(m.data));
           m.respond(sc.encode(result));
@@ -195,17 +209,25 @@ servers.forEach(async (v) => {
           break;
         }
         case 'update': {
-          const result = updateChannelNotary(sc.decode(m.data));
+          const result = await updateChannelNotary(sc.decode(m.data));
           m.respond(sc.encode(result));
           break;
         }
         case 'delete': {
-          const result = deleteChannelNotary(sc.decode(m.data));
+          const result = await deleteChannelNotary(sc.decode(m.data));
           m.respond(sc.encode(result));
           break;
         }
         default:
-          m.respond(sc.encode('Incorrect Channel Request'));
+          m.respond(
+            sc.encode(
+              JSON.stringify({
+                success: false,
+                status: `invalid request`,
+              })
+            )
+          );
+          break;
       }
     }
   })(channelSubscriptionEvents);
@@ -221,7 +243,6 @@ servers.forEach(async (v) => {
       const chunks = m.subject.split('.');
       log.info(`[federation] #${sub.getProcessed()} handling [${chunks[1]}]`);
       switch (chunks[1]) {
-        // Handle different federation requests
         case 'create': {
           const result = await createRequest(sc.decode(m.data));
           m.respond(sc.encode(result));
@@ -253,7 +274,15 @@ servers.forEach(async (v) => {
           break;
         }
         default:
-          m.respond(sc.encode('Incorrect Channel Request'));
+          m.respond(
+            sc.encode(
+              JSON.stringify({
+                success: false,
+                status: `invalid request`,
+              })
+            )
+          );
+          break;
       }
     }
   })(federationSubscriptionEvents);

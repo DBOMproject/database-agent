@@ -39,13 +39,19 @@ const createAsset = async (requestData) => {
           payload: asset,
         },
       });
-      log.info(`Added to history: ${JSON.stringify(history)}`);
+      log.info(`added to history: ${JSON.stringify(history)}`);
     }
-    log.info(`Asset created: ${JSON.stringify(asset)}`);
-    return JSON.stringify(asset);
+    log.info(`successfully created asset: ${JSON.stringify(asset)}`);
+    return JSON.stringify({
+      success: true,
+      status: 'successfully created asset',
+    });
   } catch (error) {
-    log.error(`Failed to create asset: ${error.message}`);
-    throw new Error('Failed to create asset');
+    log.error(`failed to create asset: ${error}`);
+    return JSON.stringify({
+      success: false,
+      status: `failed to create asset`,
+    });
   }
 };
 
@@ -58,11 +64,14 @@ const getAllAsset = async (requestData) => {
         channelId,
       },
     });
-    log.info(`Found asset/s: ${JSON.stringify(assets)}`);
-    return JSON.stringify(assets);
+    log.info(`found ${assets.length} assets: ${JSON.stringify(assets)}`);
+    return JSON.stringify({ success: true, result: assets });
   } catch (error) {
-    log.error(`Failed to find asset/s: ${error.message}`);
-    throw new Error('Failed to retrieve assets');
+    log.error(`failed to retrieve assets: ${error}`);
+    return JSON.stringify({
+      success: false,
+      status: `failed to retrieve assets`,
+    });
   }
 };
 
@@ -76,11 +85,23 @@ const getAssetById = async (requestData) => {
         assetId,
       },
     });
-    log.info(`Found ${asset.length} asset ${JSON.stringify(asset)}`);
-    return JSON.stringify(asset);
+
+    if (asset.length === 0) {
+      log.info(`asset does not exist`);
+      return JSON.stringify({
+        success: false,
+        status: `asset does not exist`,
+      });
+    }
+
+    log.info(`found ${asset.length} asset: ${JSON.stringify(asset)}`);
+    return JSON.stringify({ success: true, result: asset });
   } catch (error) {
-    log.error(`Failed to find asset: ${error.message}`);
-    throw new Error('Failed to retrieve asset');
+    log.error(`failed to retrieve asset: ${error}`);
+    return JSON.stringify({
+      success: false,
+      status: `failed to retrieve asset`,
+    });
   }
 };
 
@@ -98,6 +119,15 @@ const updateAsset = async (requestData) => {
         modifiedAt: new Date(),
       },
     });
+
+    if (asset.length === 0) {
+      log.info(`asset does not exist`);
+      return JSON.stringify({
+        success: false,
+        status: `asset does not exist`,
+      });
+    }
+
     if (asset) {
       const history = await prisma.history.create({
         data: {
@@ -107,13 +137,20 @@ const updateAsset = async (requestData) => {
           payload: payload,
         },
       });
-      log.info(`Added to history: ${JSON.stringify(history)}`);
+      log.info(`added to history: ${JSON.stringify(history)}`);
     }
-    log.info(`Updated asset: ${JSON.stringify(asset)}`);
-    return JSON.stringify(asset);
+
+    log.info(`successfully updated asset: ${JSON.stringify(asset)}`);
+    return JSON.stringify({
+      success: true,
+      status: `successfully updated asset`,
+    });
   } catch (error) {
-    log.error(`Failed to update asset: ${error.message}`);
-    throw new Error('Failed to update asset');
+    log.error(`failed to update asset: ${error}`);
+    return JSON.stringify({
+      success: false,
+      status: `failed to update asset`,
+    });
   }
 };
 
@@ -129,7 +166,11 @@ const linkAsset = async (requestData) => {
     });
 
     if (assetToLink.length === 0) {
-      throw new Error('Asset not found');
+      log.info(`asset does not exist`);
+      return JSON.stringify({
+        success: false,
+        status: `asset does not exist`,
+      });
     }
 
     const assetToLinkId = assetToLink[0].id;
@@ -145,8 +186,10 @@ const linkAsset = async (requestData) => {
         modifiedAt: new Date(),
       },
     });
-    log.info(`Linked asset: ${JSON.stringify(updatedAssetLink)}`);
     if (updatedAssetLink) {
+      log.info(
+        `successfully linked asset: ${JSON.stringify(updatedAssetLink)}`
+      );
       const history = await prisma.history.create({
         data: {
           channelId,
@@ -155,12 +198,18 @@ const linkAsset = async (requestData) => {
           payload: updatedAssetLink,
         },
       });
-      log.info(`Added to history: ${JSON.stringify(history)}`);
+      log.info(`added to history: ${JSON.stringify(history)}`);
+      return JSON.stringify({
+        success: true,
+        status: `successfully linked asset`,
+      });
     }
-    return JSON.stringify(updatedAssetLink);
   } catch (error) {
-    log.error(`Failed to link asset: ${error.message}`);
-    throw new Error('Failed to link asset');
+    log.error(`failed to link asset: ${error}`);
+    return JSON.stringify({
+      success: false,
+      status: `failed to link asset`,
+    });
   }
 };
 
@@ -176,7 +225,11 @@ const unlinkAsset = async (requestData) => {
     });
 
     if (linkToDeleteId.length === 0) {
-      throw new Error('Asset not found');
+      log.info(`asset does not exist`);
+      return JSON.stringify({
+        success: false,
+        status: `asset does not exist`,
+      });
     }
 
     const updateAssetId = linkToDeleteId[0].id;
@@ -196,6 +249,9 @@ const unlinkAsset = async (requestData) => {
       },
     });
     if (updatedAssetLink) {
+      log.info(
+        `successfully unlinked asset: ${JSON.stringify(updatedAssetLink)}`
+      );
       const history = await prisma.history.create({
         data: {
           channelId,
@@ -204,13 +260,18 @@ const unlinkAsset = async (requestData) => {
           payload: updatedAssetLink,
         },
       });
-      log.info(`Added to history: ${JSON.stringify(history)}`);
+      log.info(`added to history: ${JSON.stringify(history)}`);
+      return JSON.stringify({
+        success: true,
+        status: `successfully unlinked asset`,
+      });
     }
-    log.info(`Unlinked asset: ${JSON.stringify(updatedAssetLink)}`);
-    return JSON.stringify(updatedAssetLink);
   } catch (error) {
-    log.error(`Failed to unlink asset: ${error.message}`);
-    throw new Error('Failed to unlink asset');
+    log.error(`failed to unlink asset: ${error}`);
+    return JSON.stringify({
+      success: false,
+      status: `failed to unlink asset`,
+    });
   }
 };
 
@@ -224,11 +285,17 @@ const queryAsset = async (requestData) => {
     query.where.channelId = { equals: channelId };
 
     const asset = await prisma.asset.findMany(query);
-    log.info(`Query successful: ${JSON.stringify(asset)}`);
-    return JSON.stringify(asset);
+    log.info(`successful query: ${JSON.stringify(asset)}`);
+    return JSON.stringify({
+      success: true,
+      result: asset,
+    });
   } catch (error) {
-    log.error(`Failed to make query: ${error.message}`);
-    throw new Error('Failed to make query');
+    log.error(`failed to execute query: ${error}`);
+    return JSON.stringify({
+      success: false,
+      status: `failed to execute query`,
+    });
   }
 };
 
@@ -257,11 +324,17 @@ const richQueryAsset = async (requestData) => {
     }
 
     const asset = await prisma.asset.findMany(richQuery);
-    log.info(`Query successful: ${JSON.stringify(asset)}`);
-    return JSON.stringify(asset);
+    log.info(`successful query: ${JSON.stringify(asset)}`);
+    return JSON.stringify({
+      success: true,
+      result: asset,
+    });
   } catch (error) {
-    log.error(`Failed to make rich query: ${error.message}`);
-    throw new Error('Failed to make rich query');
+    log.error(`failed to execute query: ${error}`);
+    return JSON.stringify({
+      success: false,
+      status: `failed to execute query`,
+    });
   }
 };
 
@@ -269,17 +342,23 @@ const richQueryAsset = async (requestData) => {
 const auditAsset = async (requestData) => {
   try {
     const { channelId, assetId } = JSON.parse(requestData);
-    const asset = await prisma.history.findMany({
+    const audit = await prisma.history.findMany({
       where: {
         channelId,
         assetId,
       },
     });
-    log.info(`Found ${asset.length} audit of asset ${JSON.stringify(asset)}`);
-    return JSON.stringify(asset);
+    log.info(`found ${audit.length} audit of asset ${JSON.stringify(audit)}`);
+    return JSON.stringify({
+      success: true,
+      result: audit,
+    });
   } catch (error) {
-    log.error(`Failed to audit asset: ${error.message}`);
-    throw new Error('Failed to audit asset');
+    log.error(`failed to audit asset: ${error}`);
+    return JSON.stringify({
+      success: false,
+      status: `failed to audit asset`,
+    });
   }
 };
 

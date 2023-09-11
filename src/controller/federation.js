@@ -36,17 +36,19 @@ const createRequest = async (requestData) => {
     });
 
     if (channel.length === 0) {
-      log.info(`Channel ${channelId} does not exist`);
+      log.info(
+        `failed to create federation request since channel does not exist`
+      );
       return JSON.stringify({
         success: false,
-        status: `Channel ${channelId} does not exist`,
+        status: `failed to create federation request since channel does not exist`,
       });
     }
 
-    log.info(`Found ${channel} channel - ${JSON.stringify(channel)}`);
+    log.info(`found channel: ${JSON.stringify(channel)}`);
 
     log.info(
-      `Creating FederationRequest with nodeId ${nodeId} and channelId ${channelId} and nodeUri ${nodeUri}`
+      `creating federation request with nodeId: ${nodeId}, channelId: ${channelId}, nodeUri ${nodeUri}`
     );
 
     // Check if the federation request already exists for given nodeId and channelId and status is 'AWAITING_ACTION'
@@ -90,7 +92,7 @@ const createRequest = async (requestData) => {
           false
         );
 
-        // Update the node's _metadata - channelConnections
+        // Update the node's metadata - channelConnections
         const updatedNode = await prisma.node.update({
           where: {
             nodeId: process.env.NODE_ID,
@@ -111,33 +113,32 @@ const createRequest = async (requestData) => {
           },
         });
 
-        log.info(`FederationRequest created: ${JSON.stringify(federation)}`);
-        log.info(`Node _metadata updated ${JSON.stringify(updatedNode)}`);
+        log.info(`federation request created: ${JSON.stringify(federation)}`);
+        log.info(`node metadata updated: ${JSON.stringify(updatedNode)}`);
 
-        return JSON.stringify({ success: true, result: federation });
+        return JSON.stringify({
+          success: true,
+          status: `successfully created federation request`,
+        });
       } else {
-        log.info(
-          `ChannelId ${channelId} is already connected within channelConnections.`
-        );
+        log.info(`channel is already connected`);
         return JSON.stringify({
           success: false,
-          status: `ChannelId ${channelId} is already connected within channelConnections.`,
+          status: `channel is already connected`,
         });
       }
     } else {
-      log.info(
-        `Federation exists. ${channelId} is already connected within channelConnections.`
-      );
+      log.info(`federation request already exists`);
       return JSON.stringify({
         success: false,
-        status: `Federation exists. ${channelId} is already connected within channelConnections`,
+        status: `federation request already exists`,
       });
     }
   } catch (error) {
-    log.error(`Failed to create FederationRequest: ${error.message}`);
+    log.error(`failed to create federation request: ${error}`);
     return JSON.stringify({
       success: false,
-      status: `Failed to create FederationRequest`,
+      status: `failed to create federation request`,
     });
   }
 };
@@ -146,19 +147,19 @@ const createRequest = async (requestData) => {
 const getAllRequests = async () => {
   try {
     const federation = await prisma.federation.findMany({});
-    log.info(`Found ${federation.length} federation requests`);
+    log.info(`found ${federation.length} federation requests`);
     if (federation.length === 0) {
       return JSON.stringify({
         success: true,
-        status: `Found ${federation.length} federation requests`,
+        status: `found no federation requests`,
       });
     }
     return JSON.stringify({ success: true, result: federation });
   } catch (error) {
-    log.error(`Failed to list FederationRequests: ${error.message}`);
+    log.error(`failed to retrieve federation requests: ${error}`);
     return JSON.stringify({
       success: false,
-      status: 'Failed to retrieve FederationRequests',
+      status: 'failed to retrieve federation requests',
     });
   }
 };
@@ -173,11 +174,11 @@ const getOneRequest = async (requestData) => {
       },
     });
 
-    log.info(`Found ${federation.length} FederationRequest`);
+    log.info(`found ${federation.length} federation request`);
     if (federation.length === 0) {
       return JSON.stringify({
         success: false,
-        status: `FederationRequest ${requestId} not found`,
+        status: `federation request does not exist`,
       });
     }
     return JSON.stringify({
@@ -185,10 +186,10 @@ const getOneRequest = async (requestData) => {
       result: federation,
     });
   } catch (error) {
-    log.error(`Failed to retrieve FederationRequest: ${error.message}`);
+    log.error(`failed to retrieve federation request: ${error}`);
     return JSON.stringify({
       success: false,
-      status: 'Failed to retrieve FederationRequest',
+      status: 'failed to retrieve federation request',
     });
   }
 };
@@ -203,7 +204,7 @@ const acceptRequest = async (requestData) => {
         status: 'AWAITING_ACTION',
       },
     });
-    if (federationRequest.length > 0) {
+    if (federationRequest.length) {
       const nodeMetadata = await prisma.node.findMany({
         where: {
           nodeId: process.env.NODE_ID,
@@ -227,7 +228,7 @@ const acceptRequest = async (requestData) => {
           modifiedAt: new Date(),
         },
       });
-      log.info('Node _metadata update success', nodeMetaUpdate);
+      log.info(`node metadata updated: ${JSON.stringify(nodeMetaUpdate)}`);
       const federation = await prisma.federation.updateMany({
         where: {
           requestId,
@@ -238,20 +239,29 @@ const acceptRequest = async (requestData) => {
           modifiedAt: new Date(),
         },
       });
-      log.info(`Updated FederationRequest: ${JSON.stringify(federation)}`);
-      return JSON.stringify({ success: true, result: federationRequest });
-    } else {
       log.info(
-        `FederationRequest ${requestId} not found or already ACCEPTED / REJECTED`
+        `successfully accepted federation request: ${JSON.stringify(
+          federation
+        )}`
       );
       return JSON.stringify({
+        success: true,
+        status: 'successfully accepted federation request',
+      });
+    } else {
+      log.info(`request does not exist or already ACCEPTED / REJECTED`);
+      return JSON.stringify({
         success: false,
-        status: `FederationRequest ${requestId} not found or already ACCEPTED / REJECTED`,
+        status: `request does not exist or already ACCEPTED / REJECTED`,
       });
     }
   } catch (error) {
-    log.error(`Failed to accept FederationRequest: ${error.message}`);
-    return JSON.stringify({ error: 'Failed to accept FederationRequest' });
+    log.error(`failed to accept federation request: ${error}`);
+
+    return JSON.stringify({
+      success: false,
+      status: 'failed to accept federation request',
+    });
   }
 };
 
@@ -265,7 +275,7 @@ const rejectRequest = async (requestData) => {
         status: 'AWAITING_ACTION',
       },
     });
-    if (federationRequest.length > 0) {
+    if (federationRequest.length) {
       const nodeMetadata = await prisma.node.findMany({
         where: {
           nodeId: process.env.NODE_ID,
@@ -289,7 +299,7 @@ const rejectRequest = async (requestData) => {
           modifiedAt: new Date(),
         },
       });
-      log.info('Node _metadata update success', nodeMetaUpdate);
+      log.info(`node metadata updated: ${JSON.stringify(nodeMetaUpdate)}`);
       const federation = await prisma.federation.updateMany({
         where: {
           requestId,
@@ -300,22 +310,27 @@ const rejectRequest = async (requestData) => {
           modifiedAt: new Date(),
         },
       });
-      log.info(`Updated FederationRequest: ${JSON.stringify(federation)}`);
-      return JSON.stringify({ success: true, result: federationRequest });
-    } else {
       log.info(
-        `FederationRequest ${requestId} not found or already ACCEPTED / REJECTED`
+        `successfully rejected federation request: ${JSON.stringify(
+          federation
+        )}`
       );
       return JSON.stringify({
+        success: true,
+        status: 'successfully rejected federation request',
+      });
+    } else {
+      log.info(`request does not exist or already ACCEPTED / REJECTED`);
+      return JSON.stringify({
         success: false,
-        status: `FederationRequest ${requestId} not found or already ACCEPTED / REJECTED`,
+        status: `request does not exist or already ACCEPTED / REJECTED`,
       });
     }
   } catch (error) {
-    log.error(`Failed to reject FederationRequest: ${error.message}`);
+    log.error(`failed to reject federation request: ${error}`);
     return JSON.stringify({
       success: false,
-      status: 'Failed to reject FederationRequest',
+      status: 'failed to reject federation request',
     });
   }
 };
@@ -344,13 +359,17 @@ const revokeAccess = async (requestData) => {
         modifiedAt: new Date(),
       },
     });
-    log.info('Node _metadata update success', nodeMetaUpdate);
-    return JSON.stringify({ success: true, result: nodeMetaUpdate });
+
+    log.info(`successfully revoked access: ${JSON.stringify(nodeMetaUpdate)}`);
+    return JSON.stringify({
+      success: true,
+      status: `successfully revoked access`,
+    });
   } catch (error) {
-    log.error(`Failed to revoke access: ${error.message}`);
+    log.error(`failed to revoke access: ${error}`);
     return JSON.stringify({
       success: false,
-      status: 'Failed to revoke access',
+      status: 'failed to revoke access',
     });
   }
 };

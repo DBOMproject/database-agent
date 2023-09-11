@@ -24,13 +24,14 @@ const {
   updateNodeConnections,
   removeChannelConnection,
 } = require('../utils/helper');
-// Initialize Node _metadata
+// Initialize Node metadata
 const initNode = async () => {
   const { env } = process;
   nodeId = env.NODE_ID;
   publicKeys = [];
   nodeConnections = [];
   try {
+    log.info(`Initializing node metadata.......`);
     const node = await prisma.node.create({
       data: {
         nodeId,
@@ -38,173 +39,239 @@ const initNode = async () => {
         nodeConnections,
       },
     });
-    log.info(`Node _metadata ${JSON.stringify(node)}`);
-    return JSON.stringify(node);
+    log.info(`successfully initialized node metadata: ${node}`);
+    return JSON.stringify({
+      success: true,
+      status: `successfully initialized node metadata`,
+    });
   } catch (error) {
-    log.error(`Failed to init node: ${error}`);
-    throw new Error('Failed to initialize node');
+    log.error(`failed to initialize node: ${error}`);
+    return JSON.stringify({
+      success: false,
+      status: `failed to initialize node`,
+    });
   }
 };
 
-// Get Node _metadata
+// Get Node metadata
 const getNodeDetails = async () => {
   try {
     const node = await prisma.node.findMany({});
-    log.info(`Node _metadata ${JSON.stringify(node)}`);
-    return JSON.stringify(node);
+    log.info(`node metadata ${JSON.stringify(node)}`);
+    if (node.length) {
+      return JSON.stringify({ success: true, result: node });
+    } else {
+      return JSON.stringify({
+        success: false,
+        status: `node metadata does not exist`,
+      });
+    }
   } catch (error) {
-    log.error(`Failed to list node details: ${error}`);
-    throw new Error('Failed to retrieve node details');
+    log.error(`failed to retrieve node metadata: ${error}`);
+    return JSON.stringify({
+      success: false,
+      status: `failed to retrieve node metadata`,
+    });
   }
 };
 
-// Update Node _metadata on the basis of the request type received
+// Update Node metadata on the basis of the request type received
 const updateNodeDetails = async (requestData) => {
   try {
     const { nodeId, channelId, type } = JSON.parse(requestData);
     log.info(
-      `Received Request channelId - ${channelId}, nodeId - ${nodeId}, type - ${type}`
+      `received updateNodeDetails request with channelId: ${channelId}, nodeId: ${nodeId}, type: ${type}`
     );
     switch (type) {
-      case 'FEDERATION_SUCCESS':
-        {
-          // Check if the channelId is already in the node's nodeConnections
-          const existingNode = await prisma.node.findUnique({
-            where: {
-              nodeId: process.env.NODE_ID,
-            },
-            include: {
-              nodeConnections: true,
-            },
-          });
+      case 'FEDERATION_SUCCESS': {
+        // Check if the channelId is already in the node's nodeConnections
+        const existingNode = await prisma.node.findUnique({
+          where: {
+            nodeId: process.env.NODE_ID,
+          },
+          include: {
+            nodeConnections: true,
+          },
+        });
 
-          // Check if the channelId is already in the node's channelConnections
-          const isChannelConnected = existingNode.nodeConnections.some(
-            (connection) =>
-              connection.channelConnections.some(
-                (channelConnection) =>
-                  channelConnection.channelId === channelId &&
-                  channelConnection.status === 'SENT_CONNECTION_REQUEST'
-              )
-          );
-          // If not, add it
-          if (!isChannelConnected) {
-            const updatedNodeConnections = updateNodeConnections(
-              existingNode.nodeConnections,
-              nodeId,
-              channelId,
-              true
-            );
-            // Update the node's _metadata - nodeConnections
-            const updatedNode = await prisma.node.update({
-              where: {
-                nodeId: process.env.NODE_ID,
-              },
-              data: {
-                nodeConnections: updatedNodeConnections,
-                modifiedAt: new Date(),
-              },
-            });
-
-            log.info(`Node _metadata updated ${JSON.stringify(updatedNode)}`);
-          } else {
-            log.info(
-              `Node - ChannelId ${channelId} is already connected within channelConnections. Skipping update.`
-            );
-          }
-        }
-        break;
-      case 'ACCEPT':
-        {
-          const nodeMetadata = await prisma.node.findMany({
-            where: {
-              nodeId: process.env.NODE_ID,
-            },
-          });
-
-          const updateNodeConnection = updateConnectionStatus(
+        // Check if the channelId is already in the node's channelConnections
+        const isChannelConnected = existingNode.nodeConnections.some(
+          (connection) =>
+            connection.channelConnections.some(
+              (channelConnection) =>
+                channelConnection.channelId === channelId &&
+                channelConnection.status === 'SENT_CONNECTION_REQUEST'
+            )
+        );
+        // If not, add it
+        if (!isChannelConnected) {
+          const updatedNodeConnections = updateNodeConnections(
+            existingNode.nodeConnections,
             nodeId,
             channelId,
-            nodeMetadata[0].nodeConnections,
-            'FEDERATION_SUCCESS',
-            'CONNECTED',
             true
           );
-
-          const nodeMetaUpdate = await prisma.node.updateMany({
+          // Update the node's metadata - nodeConnections
+          const updatedNode = await prisma.node.update({
             where: {
               nodeId: process.env.NODE_ID,
             },
             data: {
-              nodeConnections: updateNodeConnection,
+              nodeConnections: updatedNodeConnections,
               modifiedAt: new Date(),
             },
           });
 
-          log.info('Node _metadata update success', nodeMetaUpdate);
-        }
-        break;
-      case 'REJECT':
-        {
-          const nodeMetadata = await prisma.node.findMany({
-            where: {
-              nodeId: process.env.NODE_ID,
-            },
-          });
-
-          const updateNodeConnection = updateConnectionStatus(
-            nodeId,
-            channelId,
-            nodeMetadata[0].nodeConnections,
-            'FEDERATION_SUCCESS',
-            'REJECTED',
-            true
+          log.info(
+            `successfully updated node metadata: ${JSON.stringify(updatedNode)}`
           );
-
-          const nodeMetaUpdate = await prisma.node.updateMany({
-            where: {
-              nodeId: process.env.NODE_ID,
-            },
-            data: {
-              nodeConnections: updateNodeConnection,
-              modifiedAt: new Date(),
-            },
+          return JSON.stringify({
+            success: true,
+            status: `successfully updated node metadata`,
           });
-
-          log.info('Node _metadata update success', nodeMetaUpdate);
+        } else {
+          log.info(`channel is already connected`);
+          return JSON.stringify({
+            success: false,
+            status: `channel is already connected`,
+          });
         }
-        break;
-      case 'REVOKE':
-        {
-          const nodeMetadata = await prisma.node.findMany({
-            where: {
-              nodeId: process.env.NODE_ID,
-            },
-          });
-          const updateNodeConnection = removeChannelConnection(
-            nodeMetadata[0].nodeConnections,
-            nodeId,
-            channelId
+      }
+      case 'ACCEPT': {
+        const nodeMetadata = await prisma.node.findMany({
+          where: {
+            nodeId: process.env.NODE_ID,
+          },
+        });
+
+        const updateNodeConnection = updateConnectionStatus(
+          nodeId,
+          channelId,
+          nodeMetadata[0].nodeConnections,
+          'FEDERATION_SUCCESS',
+          'CONNECTED',
+          true
+        );
+
+        const nodeMetaUpdate = await prisma.node.updateMany({
+          where: {
+            nodeId: process.env.NODE_ID,
+          },
+          data: {
+            nodeConnections: updateNodeConnection,
+            modifiedAt: new Date(),
+          },
+        });
+        if (nodeMetaUpdate) {
+          log.info(
+            `successfully updated node metadata: ${JSON.stringify(
+              nodeMetaUpdate
+            )}`
           );
-
-          const nodeMetaUpdate = await prisma.node.updateMany({
-            where: {
-              nodeId: process.env.NODE_ID,
-            },
-            data: {
-              nodeConnections: updateNodeConnection,
-              modifiedAt: new Date(),
-            },
+          return JSON.stringify({
+            success: true,
+            status: `successfully updated node metadata`,
           });
-          log.info('Node _metadata update success', nodeMetaUpdate);
+        } else {
+          return JSON.stringify({
+            success: false,
+            status: `failed to update node metadata`,
+          });
         }
-        break;
+      }
+      case 'REJECT': {
+        const nodeMetadata = await prisma.node.findMany({
+          where: {
+            nodeId: process.env.NODE_ID,
+          },
+        });
+
+        const updateNodeConnection = updateConnectionStatus(
+          nodeId,
+          channelId,
+          nodeMetadata[0].nodeConnections,
+          'FEDERATION_SUCCESS',
+          'REJECTED',
+          true
+        );
+
+        const nodeMetaUpdate = await prisma.node.updateMany({
+          where: {
+            nodeId: process.env.NODE_ID,
+          },
+          data: {
+            nodeConnections: updateNodeConnection,
+            modifiedAt: new Date(),
+          },
+        });
+
+        if (nodeMetaUpdate) {
+          log.info(
+            `successfully updated node metadata: ${JSON.stringify(
+              nodeMetaUpdate
+            )}`
+          );
+          return JSON.stringify({
+            success: true,
+            status: `successfully updated node metadata`,
+          });
+        } else {
+          return JSON.stringify({
+            success: false,
+            status: `failed to update node metadata`,
+          });
+        }
+      }
+      case 'REVOKE': {
+        const nodeMetadata = await prisma.node.findMany({
+          where: {
+            nodeId: process.env.NODE_ID,
+          },
+        });
+        const updateNodeConnection = removeChannelConnection(
+          nodeMetadata[0].nodeConnections,
+          nodeId,
+          channelId
+        );
+
+        const nodeMetaUpdate = await prisma.node.updateMany({
+          where: {
+            nodeId: process.env.NODE_ID,
+          },
+          data: {
+            nodeConnections: updateNodeConnection,
+            modifiedAt: new Date(),
+          },
+        });
+        if (nodeMetaUpdate) {
+          log.info(
+            `successfully updated node metadata: ${JSON.stringify(
+              nodeMetaUpdate
+            )}`
+          );
+          return JSON.stringify({
+            success: true,
+            status: `successfully updated node metadata`,
+          });
+        } else {
+          return JSON.stringify({
+            success: false,
+            status: `failed to update node metadata`,
+          });
+        }
+      }
       default:
-        break;
+        return JSON.stringify({
+          success: false,
+          status: `something went wrong`,
+        });
     }
   } catch (error) {
-    log.error(`Failed to update node: ${error}`);
-    throw new Error('Failed to update node');
+    log.error(`failed to update node metadata: ${error}`);
+    return JSON.stringify({
+      success: false,
+      status: 'failed to update node metadata',
+    });
   }
 };
 

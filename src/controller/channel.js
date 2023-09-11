@@ -33,11 +33,17 @@ const createChannel = async (requestData) => {
       },
     });
 
-    log.info(`Channel created: ${JSON.stringify(channel)}`);
-    return JSON.stringify(channel);
+    log.info(`successfully created channel: ${JSON.stringify(channel)}`);
+    return JSON.stringify({
+      success: true,
+      status: 'successfully created channel',
+    });
   } catch (error) {
-    log.error(`Failed to create channel: ${error.message}`);
-    throw new Error('Failed to create channel');
+    log.error(`failed to create channel: ${error}`);
+    return JSON.stringify({
+      success: false,
+      status: `failed to create channel`,
+    });
   }
 };
 
@@ -45,11 +51,14 @@ const createChannel = async (requestData) => {
 const getAllChannel = async () => {
   try {
     const channels = await prisma.channel.findMany({});
-    log.info(`Found ${channels.length} channel/s ${JSON.stringify(channels)}`);
-    return JSON.stringify(channels);
+    log.info(`found ${channels.length} channels: ${JSON.stringify(channels)}`);
+    return JSON.stringify({ success: true, result: channels });
   } catch (error) {
-    log.error(`Failed to list channels: ${error.message}`);
-    throw new Error('Failed to retrieve channels');
+    log.error(`failed to retrieve channels: ${error}`);
+    return JSON.stringify({
+      success: false,
+      status: `failed to retrieve channels`,
+    });
   }
 };
 
@@ -63,18 +72,21 @@ const getChannelById = async (requestData) => {
       },
     });
 
-    log.info(`Found ${channel.length} channel/s ${JSON.stringify(channel)}`);
-    return JSON.stringify(channel);
+    log.info(`found ${channel.length} channel ${JSON.stringify(channel)}`);
+    return JSON.stringify({ success: true, result: channel });
   } catch (error) {
-    log.error(`Failed to retrieve channel: ${error.message}`);
-    throw new Error('Failed to retrieve channel');
+    log.error(`failed to retrieve channel: ${error}`);
+    return JSON.stringify({
+      success: false,
+      status: `failed to retrieve channel`,
+    });
   }
 };
 
 // Update channel notary on the basis of channelId and notaryId
 const updateChannelNotary = async (requestData) => {
   try {
-    const { channelId, notaryId } = JSON.parse(requestData);
+    const { channelId, notaryId, notaryMeta } = JSON.parse(requestData);
     const channelToUpdate = await prisma.channel.findMany({
       where: {
         channelId,
@@ -82,7 +94,11 @@ const updateChannelNotary = async (requestData) => {
     });
 
     if (channelToUpdate.length === 0) {
-      throw new Error('Channel not found');
+      log.info(`channel does not exist`);
+      return JSON.stringify({
+        success: false,
+        status: `channel does not exist`,
+      });
     }
 
     const channelToUpdateId = channelToUpdate[0].id;
@@ -90,7 +106,7 @@ const updateChannelNotary = async (requestData) => {
     newChannelData.notaries.push({
       id: notaryId.notaryId,
       type: 'SIGNED',
-      config: {},
+      config: notaryMeta,
     });
 
     const updatedChannel = await prisma.channel.update({
@@ -100,11 +116,21 @@ const updateChannelNotary = async (requestData) => {
       data: { notaries: newChannelData.notaries, modifiedAt: new Date() },
     });
 
-    log.info(`Updated channel notary: ${JSON.stringify(updatedChannel)}`);
-    return JSON.stringify(updatedChannel);
+    log.info(
+      `successfully updated channel notary: ${JSON.stringify(updatedChannel)}`
+    );
+    if (updatedChannel) {
+      return JSON.stringify({
+        success: true,
+        status: `successfully updated channel notary`,
+      });
+    }
   } catch (error) {
-    log.error(`Failed to update channel notary: ${error.message}`);
-    throw new Error('Failed to update channel notary');
+    log.error(`failed to update channel notary: ${error}`);
+    return JSON.stringify({
+      success: false,
+      status: `failed to update channel notary`,
+    });
   }
 };
 
@@ -119,7 +145,11 @@ const deleteChannelNotary = async (requestData) => {
     });
 
     if (channelToDelete.length === 0) {
-      throw new Error('Channel not found');
+      log.info(`channel does not exist`);
+      return JSON.stringify({
+        success: false,
+        status: `channel does not exist`,
+      });
     }
 
     const channelToDeleteId = channelToDelete[0].id;
@@ -134,11 +164,21 @@ const deleteChannelNotary = async (requestData) => {
       data: { notaries: newNotaries, modifiedAt: new Date() },
     });
 
-    log.info(`Deleted channel notary: ${JSON.stringify(updatedChannel)}`);
-    return JSON.stringify(updatedChannel);
+    log.info(
+      `successfully removed channel notary: ${JSON.stringify(updatedChannel)}`
+    );
+    if (updatedChannel) {
+      return JSON.stringify({
+        success: true,
+        status: `successfully removed channel notary`,
+      });
+    }
   } catch (error) {
-    log.error(`Failed to delete channel notary: ${error.message}`);
-    throw new Error('Failed to delete channel notary');
+    log.error(`failed to remove channel notary: ${error}`);
+    return JSON.stringify({
+      success: false,
+      status: `failed to remove channel notary`,
+    });
   }
 };
 

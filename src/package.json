@@ -13,12 +13,9 @@
   },
   "dependencies": {
     "@prisma/client": "^4.8.0",
-    "body-parser": "^1.20.2",
-    "cookie-parser": "~1.4.4",
+    "crypto": "^1.0.1",
     "debug": "~2.6.9",
     "dotenv": "^16.3.1",
-    "express": "~4.16.1",
-    "express-winston": "^4.0.3",
     "jaeger-client": "^3.18.0",
     "mongodb": "^3.5.5",
     "morgan": "~1.9.1",
