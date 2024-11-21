@@ -30,7 +30,7 @@
     "eslint": "^7.32.0",
     "eslint-config-airbnb": "^18.2.1",
     "eslint-plugin-import": "^2.26.0",
-    "jsdoc": "^3.6.10",
+    "jsdoc": "^4.0.2",
     "minami": "^1.2.3",
     "mocha": "^9.2.2",
     "mocha-jenkins-reporter": "^0.4.8",
